@@ -6,8 +6,8 @@ from .models import CustomUser
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    list_display = ('email', 'phone', 'city', 'avatar')
-    ordering = ('email', )
+    list_display = ('id', 'email', 'phone', 'city', 'avatar')
+    ordering = ('email',)
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
