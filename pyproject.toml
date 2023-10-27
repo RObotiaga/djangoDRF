@@ -14,6 +14,7 @@ crispy-bootstrap4 = "^2022.1"
 psycopg2 = "^2.9.9"
 pillow = "^10.0.1"
 djangorestframework = "^3.14.0"
+django-filter = "^23.3"
 
 [build-system]
 requires = ["poetry-core"]
