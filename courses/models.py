@@ -49,3 +49,12 @@ class Payment(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.DO_NOTHING, null=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=10, choices=[('cash', 'Наличные'), ('transfer', 'Перевод')])
+
+
+class Subscription(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, null=True)
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING)
+    status = models.CharField(max_length=20, choices=[('sub', 'подписан'), ('unsub', 'неподписан')], default='sub')
+
+    def __str__(self):
+        return f'{self.user}, {self.course}, {self.status}'
