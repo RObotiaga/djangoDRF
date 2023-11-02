@@ -1,10 +1,6 @@
 from rest_framework import serializers
 from .models import Course, Lesson, Payment, Subscription
-
-
-def youtube_url(value):
-    if 'youtube.com' not in value:
-        raise serializers.ValidationError("Ссылка должна вести на youtube")
+from .validators import youtube_url
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -18,19 +14,26 @@ class LessonSerializer(serializers.ModelSerializer):
 class CourseSerializer(serializers.ModelSerializer):
     lessons_count = serializers.SerializerMethodField()
     lessons = LessonSerializer(source='lesson_set', many=True, required=False)
+    is_subscribed = serializers.SerializerMethodField()
 
     def get_lessons_count(self, obj):
         return Lesson.objects.filter(course=obj).count()
 
+    def get_is_subscribed(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Subscription.objects.filter(user=user, course=obj, status='sub').exists()
+        return False
     class Meta:
         model = Course
-        fields = ['id', 'name', 'preview', 'description', 'lessons_count', 'lessons', 'user']
+        fields = '__all__'
 
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
+
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:

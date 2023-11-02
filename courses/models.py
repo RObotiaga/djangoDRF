@@ -9,7 +9,6 @@ class Course(models.Model):
     name = models.CharField(max_length=255, verbose_name='название')
     preview = models.ImageField(upload_to='course_previews/', verbose_name='превью', **NULLABLE)
     description = models.TextField(verbose_name='описание')
-
     user = models.ForeignKey(CustomUser, verbose_name='пользователь', on_delete=models.DO_NOTHING, default=1)
 
     def __str__(self):
