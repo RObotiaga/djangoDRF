@@ -1,6 +1,10 @@
+import requests
+from decouple import config
 from django.shortcuts import render
-from rest_framework import viewsets, generics
+from rest_framework.response import Response
+from rest_framework import viewsets, generics, status
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.views import APIView
 
 from .models import Lesson, Course, Payment, Subscription
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -82,6 +86,54 @@ class PaymentListAPIView(generics.ListAPIView):
     ordering_fields = ('course', 'lesson', 'payment_method', 'payment_date')
 
 
+class PaymentCreateAPIView(generics.CreateAPIView):
+    permission_classes = [IsOwner | IsAdminUser | IsManager, ]
+
+    def post(self, request, *args, **kwargs):
+        if not self.request.user.is_authenticated:
+            return Response({"error": "User is not authenticated."}, status=status.HTTP_403_FORBIDDEN)
+
+        amount = request.data['amount']
+        payment_method = request.data['payment_method']
+        course = request.data.get('course')
+        lesson = request.data.get('lesson')
+        user = self.request.user
+        stripe_secret_key = config('STRIPE_SECRET_KEY')
+        stripe_api_url = "https://api.stripe.com/v1/payment_intents"
+
+        headers = {
+            "Authorization": f"Bearer {stripe_secret_key}",
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+        data = {
+            "amount": int(amount) * 100,  # Сумма в центах
+            "currency": "usd",  # Валюта
+        }
+
+        try:
+            response = requests.post(stripe_api_url, headers=headers, data=data)
+            payment_intent = response.json()
+            new_payment = Payment.objects.create(
+                amount=amount,
+                payment_method=payment_method,
+                user=user,
+                key=payment_intent.get('client_secret'),
+                course=course,
+                lesson=lesson,
+            )
+            new_payment.save()
+            return Response({"client_secret": payment_intent.get('client_secret'),
+                             "payment_method": payment_intent.get('payment_method')})
+
+        except requests.exceptions.RequestException as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+class PaymentRetrieveAPIView(generics.RetrieveAPIView):
+    serializer_class = PaymentSerializer
+    queryset = Payment.objects.all()
+    permission_classes = [IsOwner | IsAdminUser | IsManager, ]
+
+
 ################################################################
 
 class SubscriptionCreateAPIView(generics.CreateAPIView):
@@ -95,6 +147,7 @@ class SubscriptionCreateAPIView(generics.CreateAPIView):
 
 class SubscriptionListAPIView(generics.ListAPIView):
     serializer_class = SubscriptionSerializer
+
     def get_queryset(self):
         user = self.request.user
         if user.groups.filter(name='Moderator').exists():

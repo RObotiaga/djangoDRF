@@ -44,10 +44,11 @@ class Lesson(models.Model):
 class Payment(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING)
     payment_date = models.DateTimeField(auto_now_add=True)
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, null=True)
-    lesson = models.ForeignKey(Lesson, on_delete=models.DO_NOTHING, null=True)
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, **NULLABLE)
+    lesson = models.ForeignKey(Lesson, on_delete=models.DO_NOTHING, **NULLABLE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_method = models.CharField(max_length=10, choices=[('cash', 'Наличные'), ('transfer', 'Перевод')])
+    key = models.CharField(max_length=150, null=True)
 
 
 class Subscription(models.Model):
