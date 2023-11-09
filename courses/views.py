@@ -1,11 +1,16 @@
 import requests
 from decouple import config
+from django.core.exceptions import ValidationError
 from django.shortcuts import render
+from django.utils import timezone
 from rest_framework.response import Response
 from rest_framework import viewsets, generics, status
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.views import APIView
-
+import json
+from datetime import datetime, timedelta
+from .tasks import send_notification
+from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from .models import Lesson, Course, Payment, Subscription
 from rest_framework.filters import SearchFilter, OrderingFilter
 
@@ -27,6 +32,10 @@ class CourseViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    def perform_update(self, serializer):
+        course = serializer.save()
+        send_notification.delay(course.pk)
+
     def get_permissions(self):
         if self.action == 'update' or self.action == 'partial_update':
             permission_classes = [IsOwner | IsAdminUser | IsManager, ]
@@ -45,7 +54,8 @@ class LessonCreateAPIView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated | IsAdminUser | IsManager, ]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        lesson = serializer.save(user=self.request.user)
+        send_notification.delay(lesson.course.id)
 
 
 class LessonListAPIView(generics.ListAPIView):
@@ -74,6 +84,10 @@ class LessonUpdateAPIView(generics.UpdateAPIView):
     serializer_class = LessonSerializer
     queryset = Lesson.objects.all()
     permission_classes = [IsOwner | IsAdminUser | IsManager, ]
+
+    def perform_update(self, serializer):
+        lesson = serializer.save()
+        send_notification.delay(lesson.course.id)
 
 
 ################################################################

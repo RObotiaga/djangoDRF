@@ -55,6 +55,7 @@ class Subscription(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.DO_NOTHING, null=True)
     course = models.ForeignKey(Course, on_delete=models.DO_NOTHING)
     status = models.CharField(max_length=20, choices=[('sub', 'подписан'), ('unsub', 'неподписан')], default='sub')
+    last_update = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f'{self.user}, {self.course}, {self.status}'
