@@ -24,13 +24,13 @@ class CourseSerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return Subscription.objects.filter(user=user, course=obj, status='sub').exists()
         return False
+
     class Meta:
         model = Course
         fields = '__all__'
 
 
 class PaymentSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Payment
         fields = '__all__'

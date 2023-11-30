@@ -6,14 +6,18 @@ from .serializers import UserSerializer, UserSerializerForOthers, UserRegisterSe
 
 class UserRetrieveAPIView(generics.RetrieveAPIView):
     queryset = CustomUser.objects.all()
+
     def get_serializer_class(self):
         if int(self.request.user.pk) == int(self.kwargs["pk"]):
             return UserSerializer
         else:
             return UserSerializerForOthers
+
+
 class UserCreateAPIView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
     serializer_class = UserRegisterSerializer
+
 
 class UserUpdateAPIView(generics.UpdateAPIView):
     serializer_class = UserSerializer
